@@ -7,6 +7,7 @@ import numpy as np
 from PIL import Image
 import pickle
 import csv
+import warnings
 
 """
 Preprocessing provides some useful functions to preprocess data before
@@ -36,11 +37,16 @@ def to_categorical(y, nb_classes):
 
     """
     y = np.asarray(y, dtype='int32')
+    # high dimensional array warning
+    if len(y.shape) > 2:
+        warnings.warn('{}-dimensional array is used as input array.'.format(len(y.shape)), stacklevel=2)
+    # flatten high dimensional array
+    if len(y.shape) > 1:
+        y = y.reshape(-1)
     if not nb_classes:
         nb_classes = np.max(y)+1
     Y = np.zeros((len(y), nb_classes))
-    for i in range(len(y)):
-        Y[i, y[i]] = 1.
+    Y[np.arange(len(y)),y] = 1.
     return Y
 
 
@@ -384,8 +390,8 @@ def build_hdf5_image_dataset(target_path, image_shape, output_path='dataset.h5',
 
     n_classes = np.max(labels) + 1
 
-    d_imgshape = (len(images), image_shape[0], image_shape[1], 3) \
-        if not grayscale else (len(images), image_shape[0], image_shape[1])
+    d_imgshape = (len(images), image_shape[1], image_shape[0], 3) \
+        if not grayscale else (len(images), image_shape[1], image_shape[0])
     d_labelshape = (len(images), n_classes) \
         if categorical_labels else (len(images), )
     x_chunks = None
